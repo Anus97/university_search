@@ -2,24 +2,33 @@ import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import _ from 'lodash';
 
-const pageSize = 10;
+const pageSize = 20;
 const Postes = () => {
     const [posts, setPosts] = useState();
-    useEffect(()=>{
+    const [paginatedPosts, setPaginatedPosts] = useState();
+    const [currentPage, setCurrentPage] = useState(1);
+        useEffect(()=>{
         axios.get('http://universities.hipolabs.com/search?country=India')
         .then(res=>{
             console.log(res.data);
             setPosts(res.data);
+            setPaginatedPosts(_(res.data).slice(0).take(pageSize).value());
         })
     },[])
 
     const pageCount = posts? Math.ceil(posts.length/pageSize) :0;
     if(pageCount === 1) return null;
     const pages = _.range(1, pageCount+1);
+    const pagination=(pageNo)=>{
+        setCurrentPage(pageNo);
+        const startIndex = (pageNo - 1) * pageSize;
+        const paginatedpost = _(posts).slice(startIndex).take(pageSize).value();
+        setPaginatedPosts(paginatedpost);
+    }
     return ( 
         <div>{
-            !posts ? ("No data found"):(
-                <table className='table'>
+            !paginatedPosts ? ("No data found"):(
+                <table className='table table-striped'>
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -29,7 +38,7 @@ const Postes = () => {
                     </thead>
                     <tbody>
                         {
-                            posts.map((post, index)=>(
+                            paginatedPosts.map((post, index)=>(
                                 <tr key={index}>
                                     <td>{post.id}</td>
                                     <td>{post.country}</td>
@@ -44,7 +53,10 @@ const Postes = () => {
                 <ul className='pagination'>
                     {
                         pages.map((page)=>(
-                            <li className='page-link'>{pages}</li>
+                            <li className= {
+                                page === currentPage ? "page-item active" : "page-item"
+                            }><p className='page-link'
+                            onClick={()=>pagination(page)}>{page}</p></li>
                         ))
                     }
                 </ul>
